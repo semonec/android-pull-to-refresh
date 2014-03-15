@@ -109,7 +109,7 @@ public abstract class PullToRefreshAdapterViewBase<T extends AbsListView> extend
 		return mShowIndicator;
 	}
 
-	public final void onScroll(final AbsListView view, final int firstVisibleItem, final int visibleItemCount,
+	public void onScroll(final AbsListView view, final int firstVisibleItem, final int visibleItemCount,
 			final int totalItemCount) {
 
 		if (DEBUG) {
