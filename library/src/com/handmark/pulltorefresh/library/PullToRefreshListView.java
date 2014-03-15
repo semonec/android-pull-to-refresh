@@ -31,6 +31,7 @@ import android.widget.AbsListView;
 import android.widget.FrameLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.AbsListView.OnScrollListener;
 
 import com.handmark.pulltorefresh.library.internal.EmptyViewMethodAccessor;
 import com.handmark.pulltorefresh.library.internal.LoadingLayout;
@@ -192,7 +193,10 @@ public class PullToRefreshListView extends PullToRefreshAdapterViewBase<ListView
 			final int totalItemCount) {
 		super.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
 	}
-	
+	@Override
+	public void onScrollStateChanged(final AbsListView view, final int state) {
+		super.onScrollStateChanged(view, state);
+	}
 	@Override
 	protected LoadingLayoutProxy createLoadingLayoutProxy(final boolean includeStart, final boolean includeEnd) {
 		LoadingLayoutProxy proxy = super.createLoadingLayoutProxy(includeStart, includeEnd);

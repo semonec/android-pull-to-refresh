@@ -1,15 +1,20 @@
-package com.handmark.pulltorefresh.library.extras;
+package com.handmark.pulltorefresh.library;
+
+import com.handmark.pulltorefresh.library.PullToRefreshListView.InternalListView;
+import com.handmark.pulltorefresh.library.PullToRefreshListView.InternalListViewSDK9;
 
 import android.content.Context;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-
-import com.handmark.pulltorefresh.library.PullToRefreshListView;
-import com.handmark.pulltorefresh.library.R;
 
 public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 
@@ -27,32 +32,43 @@ public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 		
 	public PullToRefreshAndLoadMoreListView(Context context) {
 		super(context);
-		init(context);
-		
 	}
 	public PullToRefreshAndLoadMoreListView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		init(context);
 	}
 
-	private void init(Context context) {
+	
+	@Override
+	protected ListView createListView(Context context, AttributeSet attrs) {
+		final ListView lv;
+		if (VERSION.SDK_INT >= VERSION_CODES.GINGERBREAD) {
+			lv = new InternalListViewSDK9(context, attrs);
+		} else {
+			lv = new InternalListView(context, attrs);
+		}
+		
+		
+		mFooterView = new RelativeLayout(context);
+		mProgressBarLoadMore = new ProgressBar(context);
+		mProgressBarLoadMore.setLayoutParams(new LayoutParams(70, 70));
+		mProgressBarLoadMore.setIndeterminateDrawable(
+				context.getResources().getDrawable(R.drawable.progress_indeterminate_horizontal_holo));
+		mProgressBarLoadMore.setVisibility(View.GONE);
+		mFooterView.addView(mProgressBarLoadMore);
+		lv.addFooterView(mFooterView);
+		return lv;
+	}
+	
+	/**
+	 * Register a callback to be invoked when this list reaches the end (last
+	 * item be visible)
+	 * 
+	 * @param onLoadMoreListener
+	 *            The callback to run.
+	 */
 
-		mInflater = (LayoutInflater) context
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-		// footer
-		mFooterView = (RelativeLayout) mInflater.inflate(
-				R.layout.load_more_footer, this, false);
-		/*
-		 * mLabLoadMore = (TextView) mFooterView
-		 * .findViewById(R.id.load_more_lab_view);
-		 */
-		mProgressBarLoadMore = (ProgressBar) mFooterView
-				.findViewById(R.id.load_more_progressBar);
-
-		getRefreshableView().addFooterView(mFooterView);
-
-		super.setOnScrollListener(this);
+	public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+		mOnLoadMoreListener = onLoadMoreListener;
 	}
 	
 	@Override
@@ -60,7 +76,6 @@ public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 		super.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
 		
 		if (mOnLoadMoreListener != null) {
-
 			if (visibleItemCount == totalItemCount) {
 				mProgressBarLoadMore.setVisibility(View.GONE);
 				// mLabLoadMore.setVisibility(View.GONE);
@@ -68,7 +83,11 @@ public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 			}
 
 			boolean loadMore = firstVisibleItem + visibleItemCount >= totalItemCount;
-
+			if (DEBUG) {
+				Log.i("PTRAndLoadMore", "loadMore:" + loadMore + "..mIsLoadingMore:" + mIsLoadingMore 
+						+ "..mCurrentScrollState:" + mCurrentScrollState);
+				
+			}
 			if (!mIsLoadingMore && loadMore
 					&& mCurrentScrollState != SCROLL_STATE_IDLE) {
 				mProgressBarLoadMore.setVisibility(View.VISIBLE);
@@ -80,9 +99,15 @@ public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 		}
 	};
 	
-	
+	@Override
+	public void onScrollStateChanged(AbsListView view, int scrollState) {
+		super.onScrollStateChanged(view, scrollState);
+		mCurrentScrollState = scrollState;
+	}
 	
 	public void onLoadMore() {
+		if (DEBUG) 
+			Log.d("PullToRefreshAndLoadMoreListView", "onLoadMore");
 		if (mOnLoadMoreListener != null) {
 			mOnLoadMoreListener.onLoadMore();
 		}
@@ -92,6 +117,8 @@ public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 	 * Notify the loading more operation has finished
 	 */
 	public void onLoadMoreComplete() {
+		if (DEBUG) 
+			Log.d("PullToRefreshAndLoadMoreListView", "onLoadMoreComplete");
 		mIsLoadingMore = false;
 		mProgressBarLoadMore.setVisibility(View.GONE);
 	}
@@ -106,4 +133,5 @@ public class PullToRefreshAndLoadMoreListView extends PullToRefreshListView{
 		 */
 		public void onLoadMore();
 	}
+	
 }
